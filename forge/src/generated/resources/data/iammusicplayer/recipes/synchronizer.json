@@ -1,0 +1,20 @@
+﻿{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "X": {
+      "item": "minecraft:stick"
+    },
+    "Y": {
+      "item": "create:andesite_alloy"
+    }
+  },
+  "pattern": [
+    "  Y",
+    " X ",
+    "X  "
+  ],
+  "result": {
+    "item": "iammusicplayer:synchronizer"
+  }
+}

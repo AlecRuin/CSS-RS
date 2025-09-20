@@ -31,6 +31,9 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class BoomboxBlock extends IMPBaseEntityBlock {
     private static final DirectionVoxelShapesBundle SHAPE = OEVoxelShapeUtils.makeAllDirection(OEVoxelShapeUtils.getShapeFromResource(new ResourceLocation(IamMusicPlayer.MODID, "boombox"), BoomboxBlock.class));
     public static final BooleanProperty RAISED = IMPBlockStateProperties.RAISE;
@@ -150,7 +153,11 @@ public class BoomboxBlock extends IMPBaseEntityBlock {
         if (!(be instanceof BoomboxBlockEntity boombox)) return;
         boolean powered = level.hasNeighborSignal(pos); //figure out if its powered adjacently
         if (powered) {
-            boombox.getBoomboxData().setPlaying((boombox.getBoomboxData().isPlaying())?false:true);//my jerry-rigged play-pause function
+            if(boombox.getBoomboxData().isPlaying()){
+                boombox.getBoomboxData().setPlaying(false, level, pos, new HashSet<>());//my jerry-rigged play-pause function
+            }else{
+                boombox.getBoomboxData().setPlaying(true, level, pos, new HashSet<>());//my jerry-rigged play-pause function
+            }
         }
     }
 }

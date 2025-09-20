@@ -13,7 +13,7 @@ import java.util.function.Supplier;
 public class IMPItems {
     private static final DeferredRegister<Item> ITEMS = DeferredRegister.create(IamMusicPlayer.MODID, Registries.ITEM);
     public static final RegistrySupplier<Item> RADIO_ANTENNA = register("radio_antenna", () -> new RadioAntennaItem(new Item.Properties().arch$tab(IMPCreativeModeTabs.MOD_TAB).stacksTo(1)));
-    public static final RegistrySupplier<Item> SYNCHRONIZER = register("synchronizer",()->new Item(new Item.Properties().arch$tab(IMPCreativeModeTabs.MOD_TAB).stacksTo(1)));
+    public static final RegistrySupplier<Item> SYNCHRONIZER = register("synchronizer",()->new SynchronizerItem(new Item.Properties().arch$tab(IMPCreativeModeTabs.MOD_TAB).stacksTo(1)));
     public static final RegistrySupplier<Item> PARABOLIC_ANTENNA = register("parabolic_antenna", () -> new ParabolicAntennaItem(new Item.Properties().arch$tab(IMPCreativeModeTabs.MOD_TAB).stacksTo(1).rarity(Rarity.RARE)));
     public static final RegistrySupplier<Item> CASSETTE_TAPE = register("cassette_tape", () -> new CassetteTapeItem(new Item.Properties().arch$tab(IMPCreativeModeTabs.MOD_TAB).stacksTo(1), CassetteTapeItem.BaseType.NORMAL));
     public static final RegistrySupplier<Item> CASSETTE_TAPE_GLASS = register("cassette_tape_glass", () -> new CassetteTapeItem(new Item.Properties().arch$tab(IMPCreativeModeTabs.MOD_TAB).stacksTo(1), CassetteTapeItem.BaseType.GLASS));

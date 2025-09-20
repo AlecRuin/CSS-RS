@@ -1,7 +1,9 @@
 package dev.felnull.imp.block;
 
+import dev.felnull.imp.blockentity.BoomboxBlockEntity;
 import dev.felnull.imp.item.CassetteTapeItem;
 import dev.felnull.imp.item.IMPItems;
+import dev.felnull.imp.item.SynchronizerItem;
 import dev.felnull.imp.music.resource.ImageInfo;
 import dev.felnull.imp.music.resource.Music;
 import dev.felnull.imp.music.resource.MusicSource;
@@ -12,6 +14,8 @@ import dev.felnull.otyacraftengine.server.level.TagSerializable;
 import dev.felnull.otyacraftengine.util.OENbtUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -20,13 +24,14 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
 
 public class BoomboxData {
@@ -62,6 +67,8 @@ public class BoomboxData {
     private ContinuousType continuousType = ContinuousType.NONE;
     private boolean radioStartFlg;
     private boolean noChangeCassetteTape;
+    private final List<ItemStack> synchronizers = new ArrayList<>();
+    public static final Logger LOGGER = LoggerFactory.getLogger("iammusic");
 
     public BoomboxData(CompoundTag boomboxTag, @NotNull BoomboxData.DataAccess access) {
         this.access = access;
@@ -341,6 +348,13 @@ public class BoomboxData {
             tag.putBoolean("RadioStartFlg", this.radioStartFlg);
         }
 
+        // Save the synchronizers sticks
+        ListTag list = new ListTag();
+        for (ItemStack stack : synchronizers) {
+            list.add(stack.save(new CompoundTag()));
+        }
+        tag.put("Synchronizers", list);
+
         return tag;
     }
 
@@ -361,6 +375,13 @@ public class BoomboxData {
         OENbtUtils.readUUIDMap(tag, "PlayerSelectPlaylists", playerSelectPlaylists);
         this.continuousType = ContinuousType.getByName(tag.getString("ContinuousType"));
         this.lastMonitorType = MonitorType.getByName(tag.getString("LastMonitorType"));
+
+        // Load synchronizers
+        synchronizers.clear();
+        ListTag list = tag.getList("Synchronizers", Tag.TAG_COMPOUND);
+        for (Tag t : list) {
+            synchronizers.add(ItemStack.of((CompoundTag) t));
+        }
 
         if (tag.contains("SelectedMusic"))
             this.selectedMusic = TagSerializable.loadSavedTag(tag.getCompound("SelectedMusic"), new Music());
@@ -399,18 +420,10 @@ public class BoomboxData {
         return noChangeCassetteTape;
     }
 
-    public void setPlayState(boolean state){
-        if(state){
-            if (isMusicCassetteTapeExist() || isRadio()) {
-                setPower(true);
-                setPlaying(true);
-            }
-        }else{
-            if (isPowered()) {
-                setPlaying(false);
-                //For some reason, this part doesn't work
-                setMusicPosition(0);
-            }
+    public void setStopped(){
+        if (isPowered()) {
+            setPlaying(false);
+            setMusicPosition(0);
         }
     }
 
@@ -528,7 +541,6 @@ public class BoomboxData {
         return monitorType == MonitorType.REMOTE_PLAYBACK || monitorType == MonitorType.REMOTE_PLAYBACK_SELECT;
     }
 
-
     public void setPower(boolean power) {
         access.setPower(power);
     }
@@ -549,7 +561,6 @@ public class BoomboxData {
         return playing;
     }
 
-
     public void setPlaying(boolean playing) {
         if (canPlay() || !playing) {
             this.playing = playing;
@@ -557,7 +568,27 @@ public class BoomboxData {
         }
     }
 
-
+    public void setPlaying(boolean playing, Level level, BlockPos pos, Set<BlockPos> visited) {
+        if (visited.contains(pos)) return;
+        visited.add(pos);
+        if(playing){
+            this.setPlaying(playing);
+        }else{
+            if (isPowered()) {
+                setPlaying(false);
+                setMusicPosition(0);
+            }
+        }
+        for (ItemStack stick : this.getSynchronizers()) {
+            List<BlockPos> syncedBlocks = SynchronizerItem.getSyncedBlocks(stick, level);
+            for (BlockPos bpos : syncedBlocks) {
+                BlockEntity be = level.getBlockEntity(bpos);
+                if (be instanceof BoomboxBlockEntity other) {
+                    other.getBoomboxData().setPlaying(playing, level, bpos, visited);
+                }
+            }
+        }
+    }
     public ItemStack getOldCassetteTape() {
         return oldCassetteTape;
     }
@@ -884,4 +915,19 @@ public class BoomboxData {
             return NONE;
         }
     }
+
+    public void addSynchronizer(ItemStack stack) {
+        for (ItemStack s : synchronizers) {
+            if (ItemStack.isSameItemSameTags(s, stack)) return;
+        }
+        synchronizers.add(stack.copy());
+    }
+    public List<ItemStack> getSynchronizers() {
+        // Return a copy of only valid synchronizer sticks
+        return synchronizers.stream()
+                .filter(s -> !s.isEmpty() && s.getItem() instanceof SynchronizerItem)
+                .map(ItemStack::copy)
+                .toList();
+    }
+
 }
