@@ -12,6 +12,7 @@
   "item.iammusicplayer.invalid_item.patchouli.desc": "Patchouli must be installed!",
   "item.iammusicplayer.invalid_item.patchouli.config.desc": "Integration with Patchouli must be enabled in config!",
   "item.iammusicplayer.invalid_item.desc": "This item is invalid!",
+  "item.iammusicplayer.synchronizer":"Synchronizer",
   "_comment.bl": "Block",
   "block.iammusicplayer.music_manager": "Audio Workstation",
   "block.iammusicplayer.cassette_deck": "Cassette Station",
